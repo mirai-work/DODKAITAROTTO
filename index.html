@@ -1,82 +1,376 @@
 <!DOCTYPE html>
 <html lang="ja">
+
 <head>
-<meta charset="utf-8">
+
+<meta charset="UTF-8">
+
+<meta name="viewport"
+      content="width=device-width,
+               initial-scale=1.0,
+               maximum-scale=1.0,
+               user-scalable=no">
+
 <title>DEMOCRACY OF THE DEAD</title>
+
+
+<!-- =====================================================
+     PYXEL WEB
+     ===================================================== -->
 
 <script src="https://cdn.jsdelivr.net/gh/kitao/pyxel/wasm/pyxel.js"></script>
 
-<script>
-function showEndingMovie(name) {
-
-    const oldVideo = document.getElementById("endingMovie");
-    if (oldVideo) {
-        oldVideo.remove();
-    }
-
-    const video = document.createElement("video");
-
-    video.id = "endingMovie";
-    video.src = name + ".mp4";
-    video.autoplay = true;
-    video.controls = false;
-    video.muted = false;
-    video.playsInline = true;
-
-    video.style.position = "fixed";
-    video.style.left = "0";
-    video.style.top = "0";
-    video.style.width = "100vw";
-    video.style.height = "100vh";
-    video.style.objectFit = "contain";
-    video.style.background = "black";
-    video.style.zIndex = "9999";
-
-    document.body.appendChild(video);
-
-    console.log("movie start:", name);
-
-    video.onended = function () {
-
-        console.log("movie ended");
-
-        video.remove();
-
-        if (window.pyxel_app) {
-            console.log("return title");
-            window.pyxel_app.movie_finished();
-        }
-    };
-
-    video.onerror = function () {
-        console.error("movie load error:", video.src);
-
-        video.remove();
-
-        if (window.pyxel_app) {
-            window.pyxel_app.movie_finished();
-        }
-    };
-}
-</script>
 
 <style>
-html, body {
+
+html,
+body {
+
     margin: 0;
     padding: 0;
+
+    width: 100%;
+    height: 100%;
+
     overflow: hidden;
-    background: black;
+
+    background: #000;
+
 }
+
+
+body {
+
+    display: flex;
+
+    justify-content: center;
+    align-items: center;
+
+}
+
+
+/* Pyxelゲーム */
+
+pyxel-run {
+
+    display: block;
+
+    width: 100%;
+    height: 100%;
+
+}
+
+
+/* =====================================================
+   ENDING MOVIE
+   ===================================================== */
+
+#endingMovie {
+
+    position: fixed;
+
+    left: 0;
+    top: 0;
+
+    width: 100vw;
+    height: 100vh;
+
+    object-fit: contain;
+
+    background: #000;
+
+    z-index: 99999;
+
+}
+
+
 </style>
 
 </head>
 
+
 <body>
 
+
+<!-- =====================================================
+     PYXEL GAME
+     ===================================================== -->
+
 <pyxel-run
+    root="."
     name="DODkasnihonngopy_gacya01.py"
     gamepad="enabled">
 </pyxel-run>
 
+
+<script>
+
+/* =========================================================
+   ENDING MOVIE
+   ========================================================= */
+
+window.showEndingMovie = function(name) {
+
+    console.log(
+        "[DOD] showEndingMovie:",
+        name
+    );
+
+
+    /* -----------------------------------------------
+       既存動画を削除
+       ----------------------------------------------- */
+
+    const oldVideo =
+        document.getElementById("endingMovie");
+
+    if (oldVideo) {
+
+        oldVideo.pause();
+
+        oldVideo.remove();
+
+    }
+
+
+    /* -----------------------------------------------
+       ファイル名を正規化
+       ----------------------------------------------- */
+
+    let filename = String(name);
+
+
+    /*
+     * Python側から
+     *
+     * sentakutap.mp4
+     *
+     * と渡されても、
+     *
+     * sentakutap
+     *
+     * と渡されてもOKにする。
+     */
+
+    if (!filename.toLowerCase().endsWith(".mp4")) {
+
+        filename += ".mp4";
+
+    }
+
+
+    /* -----------------------------------------------
+       GitHub Pagesの現在位置を基準にする
+       ----------------------------------------------- */
+
+    const movieURL =
+        new URL(
+            filename,
+            window.location.href
+        ).href;
+
+
+    console.log(
+        "[DOD] movie URL:",
+        movieURL
+    );
+
+
+    /* -----------------------------------------------
+       VIDEO生成
+       ----------------------------------------------- */
+
+    const video =
+        document.createElement("video");
+
+
+    video.id = "endingMovie";
+
+
+    video.src = movieURL;
+
+
+    video.autoplay = true;
+
+
+    video.controls = false;
+
+
+    video.muted = false;
+
+
+    video.playsInline = true;
+
+
+    video.preload = "auto";
+
+
+    video.setAttribute(
+        "playsinline",
+        ""
+    );
+
+
+    /* -----------------------------------------------
+       表示設定
+       ----------------------------------------------- */
+
+    video.style.position = "fixed";
+
+    video.style.left = "0";
+
+    video.style.top = "0";
+
+    video.style.width = "100vw";
+
+    video.style.height = "100vh";
+
+    video.style.objectFit = "contain";
+
+    video.style.background = "#000";
+
+    video.style.zIndex = "99999";
+
+
+    /* -----------------------------------------------
+       DOMへ追加
+       ----------------------------------------------- */
+
+    document.body.appendChild(video);
+
+
+    console.log(
+        "[DOD] movie element created"
+    );
+
+
+    /* -----------------------------------------------
+       動画終了
+       ----------------------------------------------- */
+
+    video.onended = function() {
+
+        console.log(
+            "[DOD] movie ended"
+        );
+
+
+        video.pause();
+
+        video.remove();
+
+
+        /*
+         * Python側へ戻る
+         */
+
+        if (
+            window.pyxel_app &&
+            typeof window.pyxel_app.movie_finished
+                === "function"
+        ) {
+
+            console.log(
+                "[DOD] return to title"
+            );
+
+            window.pyxel_app.movie_finished();
+
+        }
+
+    };
+
+
+    /* -----------------------------------------------
+       動画読み込みエラー
+       ----------------------------------------------- */
+
+    video.onerror = function() {
+
+        console.error(
+            "[DOD] movie load error:",
+            movieURL
+        );
+
+
+        video.remove();
+
+
+        /*
+         * エラーでもゲームを止めない
+         */
+
+        if (
+            window.pyxel_app &&
+            typeof window.pyxel_app.movie_finished
+                === "function"
+        ) {
+
+            window.pyxel_app.movie_finished();
+
+        }
+
+    };
+
+
+    /* -----------------------------------------------
+       再生
+       ----------------------------------------------- */
+
+    const playPromise =
+        video.play();
+
+
+    if (playPromise !== undefined) {
+
+        playPromise.catch(
+            function(error) {
+
+                console.warn(
+                    "[DOD] autoplay blocked:",
+                    error
+                );
+
+
+                /*
+                 * ブラウザの自動再生制限対策。
+                 *
+                 * まずミュートで再生を試す。
+                 */
+
+                video.muted = true;
+
+
+                video.play().catch(
+                    function(error2) {
+
+                        console.error(
+                            "[DOD] video play failed:",
+                            error2
+                        );
+
+                    }
+                );
+
+            }
+        );
+
+    }
+
+};
+
+
+/* =========================================================
+   DEBUG
+   ========================================================= */
+
+console.log(
+    "[DOD] DEMOCRACY OF THE DEAD Web System Ready"
+);
+
+</script>
+
+
 </body>
+
 </html>
