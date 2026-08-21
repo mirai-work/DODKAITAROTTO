@@ -2,15 +2,12 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-
     <meta name="viewport"
           content="width=device-width,
                    initial-scale=1.0,
                    maximum-scale=1.0,
                    user-scalable=no">
-
     <title>DEMOCRACY OF THE DEAD</title>
-
     <style>
         html,
         body {
@@ -40,12 +37,7 @@
             position: relative;
         }
 
-        /*
-         * Pyxel本体
-         *
-         * 元ゲームは160×120なので、
-         * ブラウザでは3倍表示。
-         */
+        /* Pyxel本体 (3倍表示) */
         pyxel-run {
             display: block;
             width: 480px;
@@ -53,9 +45,7 @@
             transform-origin: top left;
         }
 
-        /*
-         * タイトル・ゲーム説明
-         */
+        /* タイトル・ゲーム説明 */
         #game-title {
             margin-top: 390px;
             text-align: center;
@@ -74,74 +64,50 @@
             font-size: 13px;
         }
 
-        /*
-         * エンディング動画
-         */
+        /* エンディング動画 */
         #ending-movie-container {
             position: fixed;
             inset: 0;
             width: 100vw;
             height: 100vh;
-
             background: #000;
-
             display: none;
-
             align-items: center;
             justify-content: center;
-
             z-index: 99999;
         }
 
         #ending-movie {
             display: block;
-
             width: min(90vw, 800px);
             max-height: 90vh;
-
             object-fit: contain;
-
             background: #000;
         }
 
-        /*
-         * 動画終了後の黒画面
-         */
+        /* 動画終了後の黒画面 */
         #movie-blackout {
             position: fixed;
             inset: 0;
-
             background: #000;
-
             display: none;
-
             z-index: 100000;
         }
 
-        /*
-         * 閉じるボタン
-         */
+        /* 閉じるボタン */
         #movie-close {
             position: fixed;
-
             right: 15px;
             top: 15px;
-
             width: 40px;
             height: 40px;
-
             border: 1px solid #777;
             border-radius: 5px;
-
             background: rgba(0, 0, 0, 0.75);
             color: #fff;
-
             font-size: 20px;
-
             cursor: pointer;
-
             display: none;
-
             z-index: 100001;
         }
 
@@ -149,11 +115,8 @@
             background: rgba(80, 80, 80, 0.8);
         }
 
-        /*
-         * スマートフォン対応
-         */
+        /* スマートフォン対応 */
         @media (max-width: 600px) {
-
             #game-container {
                 margin-top: 10px;
             }
@@ -178,342 +141,114 @@
         }
     </style>
 </head>
-
 <body>
 
     <div id="game-container">
-
+        <!-- name属性を main.py に修正 -->
         <pyxel-run
             id="pyxel-game"
             root="./"
-            name="DEMOCRACY_OF_THE_DEAD.py">
+            name="main.py">
         </pyxel-run>
-
     </div>
-
 
     <div id="game-title">
         <h1>DEMOCRACY OF THE DEAD</h1>
         <p>© MIRAI WORK / Y.K / M.T 2026</p>
     </div>
 
-
-    <!-- =====================================================
-         エンディング動画表示領域
-         ===================================================== -->
-
+    <!-- エンディング動画表示領域 -->
     <div id="ending-movie-container">
-
         <video
             id="ending-movie"
             playsinline
             preload="auto">
         </video>
-
     </div>
-
 
     <div id="movie-blackout"></div>
 
-    <button id="movie-close"
-            type="button">
-        ×
-    </button>
+    <button id="movie-close" type="button">×</button>
 
-
-    <!-- =====================================================
-         Pyxel Web Runtime
-         ===================================================== -->
-
+    <!-- Pyxel Web Runtime -->
     <script type="module"
             src="https://cdn.jsdelivr.net/gh/kitao/pyxel@latest/wasm/pyxel.js">
     </script>
 
-
-    <!-- =====================================================
-         JavaScript
-         ===================================================== -->
-
+    <!-- JavaScript -->
     <script>
-
-        /*
-         * =====================================================
-         * DEMOCRACY OF THE DEAD
-         *
-         * Python側から
-         *
-         * js.showEndingMovie("movie.mp4")
-         *
-         * と呼び出すことで動画を再生。
-         * =====================================================
-         */
-
         let moviePlaying = false;
 
-
         function showEndingMovie(filename) {
+            console.log("DEMOCRACY OF THE DEAD: ENDING MOVIE:", filename);
 
-            console.log(
-                "DEMOCRACY OF THE DEAD:",
-                "ENDING MOVIE:",
-                filename
-            );
+            const container = document.getElementById("ending-movie-container");
+            const video = document.getElementById("ending-movie");
+            const closeButton = document.getElementById("movie-close");
 
-
-            const container =
-                document.getElementById(
-                    "ending-movie-container"
-                );
-
-            const video =
-                document.getElementById(
-                    "ending-movie"
-                );
-
-            const closeButton =
-                document.getElementById(
-                    "movie-close"
-                );
-
-
-            /*
-             * 動画ファイルの場所
-             *
-             * GitHub Pagesの同じ階層に
-             * mp4を置く構成。
-             */
-            const moviePath =
-                "./" +
-                filename;
-
-
+            const moviePath = "./" + filename;
             moviePlaying = true;
 
-
-            /*
-             * Pyxelゲームを一時的に
-             * 動画の後ろへ隠す。
-             */
             container.style.display = "flex";
-
             closeButton.style.display = "block";
 
-
-            /*
-             * 動画をリセット
-             */
             video.pause();
-
             video.currentTime = 0;
-
             video.src = moviePath;
-
             video.load();
-
-
-            /*
-             * ブラウザの自動再生制限対策。
-             *
-             * muted=true にすることで、
-             * GitHub Pages上でも再生しやすくする。
-             *
-             * 音声が必要な場合は、ユーザー操作後に
-             * unmuteする方法も使用可能。
-             */
             video.muted = false;
 
-
-            const playPromise =
-                video.play();
-
-
+            const playPromise = video.play();
             if (playPromise !== undefined) {
-
-                playPromise.catch(
-                    function(error) {
-
-                        console.log(
-                            "Autoplay blocked:",
-                            error
-                        );
-
-                        /*
-                         * 自動再生が拒否された場合は
-                         * ユーザー操作で再生できるようにする。
-                         */
-                        video.controls = true;
-
-                    }
-                );
-
+                playPromise.catch(function(error) {
+                    console.log("Autoplay blocked:", error);
+                    video.controls = true;
+                });
             }
-
         }
-
-
-        /*
-         * =====================================================
-         * 動画終了
-         * =====================================================
-         */
 
         function finishEndingMovie() {
-
-            const container =
-                document.getElementById(
-                    "ending-movie-container"
-                );
-
-            const video =
-                document.getElementById(
-                    "ending-movie"
-                );
-
-            const closeButton =
-                document.getElementById(
-                    "movie-close"
-                );
-
+            const container = document.getElementById("ending-movie-container");
+            const video = document.getElementById("ending-movie");
+            const closeButton = document.getElementById("movie-close");
 
             video.pause();
-
             video.removeAttribute("src");
-
             video.load();
 
-
             container.style.display = "none";
-
             closeButton.style.display = "none";
-
             moviePlaying = false;
 
-
-            /*
-             * Python側へ動画終了を通知。
-             */
-            if (
-                window.pyxel_app &&
-                typeof window.pyxel_app.movie_finished ===
-                "function"
-            ) {
-
+            if (window.pyxel_app && typeof window.pyxel_app.movie_finished === "function") {
                 window.pyxel_app.movie_finished();
-
             }
-
         }
 
+        document.getElementById("ending-movie").addEventListener("ended", function() {
+            finishEndingMovie();
+        });
 
-        /*
-         * 動画が最後まで再生された
-         */
-        document
-            .getElementById("ending-movie")
-            .addEventListener(
-                "ended",
-                function() {
+        document.getElementById("ending-movie").addEventListener("error", function() {
+            console.error("Ending movie could not be loaded.");
+            setTimeout(function() {
+                finishEndingMovie();
+            }, 500);
+        });
 
-                    finishEndingMovie();
+        document.getElementById("movie-close").addEventListener("click", function() {
+            finishEndingMovie();
+        });
 
-                }
-            );
-
-
-        /*
-         * 動画読み込みエラー
-         */
-        document
-            .getElementById("ending-movie")
-            .addEventListener(
-                "error",
-                function() {
-
-                    console.error(
-                        "Ending movie could not be loaded."
-                    );
-
-                    /*
-                     * ファイルが見つからない場合でも
-                     * ゲームが止まらないようにする。
-                     */
-                    setTimeout(
-                        function() {
-                            finishEndingMovie();
-                        },
-                        500
-                    );
-
-                }
-            );
-
-
-        /*
-         * 閉じるボタン
-         */
-        document
-            .getElementById("movie-close")
-            .addEventListener(
-                "click",
-                function() {
-
-                    finishEndingMovie();
-
-                }
-            );
-
-
-        /*
-         * ESCキーでも動画を終了
-         */
-        document.addEventListener(
-            "keydown",
-            function(event) {
-
-                if (
-                    event.key === "Escape" &&
-                    moviePlaying
-                ) {
-
-                    finishEndingMovie();
-
-                }
-
+        document.addEventListener("keydown", function(event) {
+            if (event.key === "Escape" && moviePlaying) {
+                finishEndingMovie();
             }
-        );
+        });
 
+        window.showEndingMovie = showEndingMovie;
 
-        /*
-         * =====================================================
-         * Pythonからアクセスできるようにする
-         * =====================================================
-         *
-         * Python:
-         *
-         * import js
-         *
-         * js.showEndingMovie("sentakutap.mp4")
-         *
-         * =====================================================
-         */
-
-        window.showEndingMovie =
-            showEndingMovie;
-
-
-        /*
-         * Pyxel Python側が
-         *
-         * js.pyxel_app = self
-         *
-         * と設定するので、
-         * Pythonからmovie_finished()を呼び出せる。
-         */
-
-        console.log(
-            "DEMOCRACY OF THE DEAD Web Runtime Ready"
-        );
-
+        console.log("DEMOCRACY OF THE DEAD Web Runtime Ready");
     </script>
 
 </body>
