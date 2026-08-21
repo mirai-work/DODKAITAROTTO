@@ -1,1 +1,81 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DEMOCRACY OF THE DEAD</title>
+    <style>
+        body {
+            background-color: #111;
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+            font-family: sans-serif;
+        }
+        #game-container {
+            position: relative;
+            width: 640px;
+            height: 480px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        /* 動画ガチャ用のオーバーレイプレイヤー */
+        #movie-container {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+        }
+        video {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+    </style>
+</head>
+<body>
 
+    <div id="game-container">
+        <!-- Pyxel Web 実行スクリプト (main.pyをエントリーポイントに指定) -->
+        <script src="https://cdn.jsdelivr.net/gh/kitao/pyxel/wasm/pyxel.js" script="main.py"></script>
+
+        <!-- 動画ガチャ再生用コンテナ -->
+        <div id="movie-container">
+            <video id="ending-video" playsinline></video>
+        </div>
+    </div>
+
+    <script>
+        // Python側 (js.showEndingMovie) から呼び出される動画再生用関数
+        window.showEndingMovie = function(filename) {
+            const container = document.getElementById('movie-container');
+            const video = document.getElementById('ending-video');
+            
+            container.style.display = 'flex';
+            video.src = filename;
+            video.play().catch(e => {
+                console.log("動画の自動再生がブロックされました:", e);
+            });
+
+            // 動画再生が終了したときの処理
+            video.onended = function() {
+                container.style.display = 'none';
+                video.src = "";
+            };
+        };
+    </script>
+
+</body>
+</html>
