@@ -612,9 +612,8 @@ class GameApp:
         self.show_final_score = False
         self.result_timer = 0
         
-        # 動画ガチャ用変数
+        # 動画自動選択（ガチャ）用変数
         self.video_timer = 0
-        self.movie_phase = 0  # 0: sentakutap.mp4, 1: 確率で選ばれる動画
 
         self.title_particles = []
         for _ in range(55):
@@ -814,7 +813,6 @@ class GameApp:
         self.stage = -1
         self.time_remaining_next_stage = BASE_TIME_LIMIT
         self.start_time_total = 0
-        self.movie_phase = 0
         self.play_music_safe("TITLE")
         self.fade.to(0, 0.06)
 
@@ -983,46 +981,32 @@ class GameApp:
             elif self.title_logo_alpha_timer > 180 and not self.fade.active and self.fade.alpha >= 0.99:
                 self.state = "MOVIE_GACHA"
                 self.video_timer = 0
-                self.movie_phase = 0  # 動画ガチャのフェーズをリセット
                 self.fade.alpha = 0.0
                 self.fade.target = 0.0
                 pyxel.stop()
 
-        # ========= 動画ガチャ（sentakutap ➡ 確率で3つのいずれか） =========
+        # ========= 動画自動選択（確率：80%, 15%, 5%） =========
         elif self.state == "MOVIE_GACHA":
             if self.video_timer == 0:
-                if self.movie_phase == 0:
-                    # 1本目: sentakutap.mp4 を再生
-                    try:
-                        import js
-                        js.showEndingMovie("sentakutap.mp4")
-                    except Exception:
-                        print("Movie Gacha [Local Test]: sentakutap.mp4")
-                elif self.movie_phase == 1:
-                    # 2本目: rea1gumono, rea2seigi, rea3kenjya のいずれかを確率で選択
-                    rand_val = random.random()
-                    if rand_val < 0.80:
-                        selected_movie = "rea1gumono.mp4"
-                    elif rand_val < 0.95:
-                        selected_movie = "rea2seigi.mp4"
-                    else:
-                        selected_movie = "rea3kenjya.mp4"
+                rand_val = random.random()
+                if rand_val < 0.80:
+                    selected_movie = "rea1gumono.mp4"
+                elif rand_val < 0.95:
+                    selected_movie = "rea2seigi.mp4"
+                else:
+                    selected_movie = "rea3kenjya.mp4"
 
-                    try:
-                        import js
-                        js.showEndingMovie(selected_movie)
-                    except Exception:
-                        print(f"Movie Gacha [Local Test]: {selected_movie}")
+                try:
+                    import js
+                    js.showEndingMovie(selected_movie)
+                except Exception:
+                    print(f"Movie Gacha [Local Test]: {selected_movie}")
 
             self.video_timer += 1
             
-            # 各動画の再生時間（環境に合わせて調整可能。例として約5秒=300フレ、または10秒=600フレ）
-            phase_limit = 300 if self.movie_phase == 0 else 600
-            if self.video_timer > phase_limit:
-                self.video_timer = 0
-                self.movie_phase += 1
-                if self.movie_phase > 1:
-                    self.reset_to_title()
+            # 動画終了判定（例：約10秒 = 600フレーム）
+            if self.video_timer > 600:
+                self.reset_to_title()
 
     def draw(self):
         ox, oy = self.shake.get_offset()
@@ -1045,7 +1029,7 @@ class GameApp:
         elif self.state == "FINAL_LOGO": self.draw_final_logo()
         elif self.state == "MOVIE_GACHA":
             pyxel.cls(0)
-            text = "PLAYING MOVIE..." if self.movie_phase == 1 else "SELECTING..."
+            text = "PLAYING MOVIE..."
             self.bdf.draw_text(self.center_text_x(text), 55, text, 8)
 
         for ash in self.ash_particles:
