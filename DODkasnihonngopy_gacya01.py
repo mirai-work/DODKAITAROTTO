@@ -1029,7 +1029,7 @@ class GameApp:
         elif self.state == "FINAL_LOGO": self.draw_final_logo()
         elif self.state == "MOVIE_GACHA":
             pyxel.cls(0)
-            text = "PLAYING MOVIE..."
+            text = ""
             self.bdf.draw_text(self.center_text_x(text), 55, text, 8)
 
         for ash in self.ash_particles:
