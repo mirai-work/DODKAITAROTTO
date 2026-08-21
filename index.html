@@ -37,7 +37,7 @@
             position: relative;
         }
 
-        /* Pyxel本体 (3倍表示) */
+        /* Pyxel本体 (3倍表示: 160x120 -> 480x360) */
         pyxel-run {
             display: block;
             width: 480px;
@@ -64,7 +64,7 @@
             font-size: 13px;
         }
 
-        /* エンディング動画 */
+        /* エンディング・ガチャ動画コンテナ */
         #ending-movie-container {
             position: fixed;
             inset: 0;
@@ -83,15 +83,6 @@
             max-height: 90vh;
             object-fit: contain;
             background: #000;
-        }
-
-        /* 動画終了後の黒画面 */
-        #movie-blackout {
-            position: fixed;
-            inset: 0;
-            background: #000;
-            display: none;
-            z-index: 100000;
         }
 
         /* 閉じるボタン */
@@ -143,8 +134,8 @@
 </head>
 <body>
 
-　　<div id="game-container">
-        <!-- DEMOCRACY_OF_THE_DEAD.py に戻す -->
+    <div id="game-container">
+        <!-- Pythonスクリプトの指定 -->
         <pyxel-run
             id="pyxel-game"
             root="./"
@@ -157,7 +148,7 @@
         <p>© MIRAI WORK / Y.K / M.T 2026</p>
     </div>
 
-    <!-- エンディング動画表示領域 -->
+    <!-- 動画表示領域（ガチャ・エンディング用） -->
     <div id="ending-movie-container">
         <video
             id="ending-movie"
@@ -166,8 +157,6 @@
         </video>
     </div>
 
-    <div id="movie-blackout"></div>
-
     <button id="movie-close" type="button">×</button>
 
     <!-- Pyxel Web Runtime -->
@@ -175,12 +164,12 @@
             src="https://cdn.jsdelivr.net/gh/kitao/pyxel@latest/wasm/pyxel.js">
     </script>
 
-    <!-- JavaScript -->
+    <!-- JavaScript 制御 -->
     <script>
         let moviePlaying = false;
 
         function showEndingMovie(filename) {
-            console.log("DEMOCRACY OF THE DEAD: ENDING MOVIE:", filename);
+            console.log("DEMOCRACY OF THE DEAD: MOVIE PLAYING:", filename);
 
             const container = document.getElementById("ending-movie-container");
             const video = document.getElementById("ending-movie");
@@ -201,7 +190,7 @@
             const playPromise = video.play();
             if (playPromise !== undefined) {
                 playPromise.catch(function(error) {
-                    console.log("Autoplay blocked:", error);
+                    console.log("Autoplay blocked, enabling controls:", error);
                     video.controls = true;
                 });
             }
@@ -215,13 +204,19 @@
             video.pause();
             video.removeAttribute("src");
             video.load();
+            video.controls = false;
 
             container.style.display = "none";
             closeButton.style.display = "none";
             moviePlaying = false;
 
+            // Python側のコールバックを安全に呼び出し
             if (window.pyxel_app && typeof window.pyxel_app.movie_finished === "function") {
-                window.pyxel_app.movie_finished();
+                try {
+                    window.pyxel_app.movie_finished();
+                } catch (e) {
+                    console.error("Error calling movie_finished:", e);
+                }
             }
         }
 
@@ -230,7 +225,7 @@
         });
 
         document.getElementById("ending-movie").addEventListener("error", function() {
-            console.error("Ending movie could not be loaded.");
+            console.error("Movie could not be loaded. Skipping...");
             setTimeout(function() {
                 finishEndingMovie();
             }, 500);
