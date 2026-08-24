@@ -1354,7 +1354,7 @@ class GameApp:
                 pyxel.pset(wx, wy + 10, 11)
                 pyxel.line(wx - 4, wy + 7, wx + 4, wy + 7, 11)
                 pyxel.line(wx - 7, wy + 3, wx + 7, wy + 3, 11)
-                status = "Wi-Fi: 接続中..."
+                status = "WiFi接続中..."
                 self.bdf.draw_text(self.center_text_x(status), py + 34, status, 7)
             else:
                 pyxel.line(wx - 8, wy + 1, wx + 8, wy + 13, 8)
