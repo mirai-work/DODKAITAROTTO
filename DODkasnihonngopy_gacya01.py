@@ -1694,8 +1694,8 @@ class GameApp:
 
     def draw_final_logo(self):
         pyxel.cls(0)
-        title_text1 = "DEMOCRACY"
-        title_text2 = "OF THE DEAD"
+        title_text1 = "カード"
+        title_text2 = "チャンス！"
         tx1 = self.center_text_x(title_text1)
         tx2 = self.center_text_x(title_text2)
         
