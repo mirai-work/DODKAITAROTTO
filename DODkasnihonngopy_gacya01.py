@@ -38,6 +38,9 @@ TRAIL_MAX_LENGTH = 200
 
 CREDITS_SPEED = 0.42
 
+# タイトル画面からオープニングに戻るまでの時間（30fps * 10秒 = 300フレーム）
+TITLE_IDLE_TIMEOUT = 300
+
 # ------------------------------------------------------------
 # タイトル画像設定
 # ------------------------------------------------------------
@@ -202,7 +205,6 @@ class Shockwave:
     def draw(self):
         if self.life > 0:
             pyxel.circb(int(self.x), int(self.y), int(self.radius), self.color)
-            # 二重のリングでリッチな衝撃波
             if self.life < 18:
                 pyxel.circb(int(self.x), int(self.y), int(self.radius * 0.6), 7)
 
@@ -354,13 +356,11 @@ class Player:
         for p in self.transform_particles:
             pyxel.rect(int(p[0]), int(p[1]), 2, 2, p[4])
 
-        # 足元の影（立体感強化）
         pyxel.circ(x, y + 5, 5, 1)
         pyxel.circ(x, y + 5, 3, 0)
         pyxel.rect(x - 4, y + 4, 9, 2, 0)
 
         if self.is_zombified:
-            # ゾンビ化したプレイヤー（エフェクト強化）
             pyxel.circ(x, y - 3, 5, 3)
             pyxel.rect(x - 5, y + 1, 10, 7, 3)
             pyxel.rect(x - 4, y + 2, 8, 5, 4)
@@ -368,29 +368,26 @@ class Player:
             pyxel.pset(x + 2, y - 4, 8)
             pyxel.line(x - 2, y - 1, x + 2, y - 1, 0)
             pyxel.line(x - 1, y, x + 1, y, 0)
-            # グロー表現
             pyxel.pset(x, y - 6, 8)
             return
 
         c = self.temp_color if self.temp_color is not None else self.color
         foot = [0, 1, -1, 0][(self.walk_frame // 4) % 4]
 
-        # 衣服と体躯のグラデーション・立体感
         pyxel.rect(x - 4, y + 3 + foot, 3, 4, c)
         pyxel.rect(x + 1, y + 3 - foot, 3, 4, c)
         pyxel.rect(x - 5, y - 3, 10, 8, c)
         pyxel.rect(x - 4, y - 2, 8, 6, 7)
         pyxel.line(x - 3, y - 2, x + 2, y - 2, 13)
-        pyxel.pset(x, y, c) # 胸元のアクセント
+        pyxel.pset(x, y, c)
 
         arm_y = y - 1
         pyxel.line(x - 5, arm_y, x - 7, arm_y + 3, c)
         pyxel.line(x + 5, arm_y, x + 7, arm_y + 3, c)
 
-        # 頭部とハイライト
         pyxel.circ(x, y - 7, 4, 6)
         pyxel.circ(x, y - 7, 3, 7)
-        pyxel.pset(x + self.dir, y - 8, 13) # 髪のハイライト
+        pyxel.pset(x + self.dir, y - 8, 13)
 
         if self.char_type in ["heroine", "girl"]:
             hair_col = 5 if self.char_type == "heroine" else 4
@@ -411,7 +408,7 @@ class Player:
 
 
 # ============================================================
-# ZOMBIE (Enhanced Visuals)
+# ZOMBIE (Enhanced Visuals with Glowing Eyes)
 # ============================================================
 
 class Zombie:
@@ -511,7 +508,6 @@ class Zombie:
         for p in self.captured_particles:
             pyxel.pset(int(p[0]), int(p[1]), p[4])
 
-        # 影
         pyxel.circ(x, y + 5, 5, 0)
         c = 7 if self.state == "captured" else self.base_color
         step = 1 if int(self.attack_anim) % 2 == 0 else -1
@@ -530,9 +526,12 @@ class Zombie:
         pyxel.circ(x, y - 6, 4, c)
         pyxel.circ(x, y - 6, 3, c + 1)
         pyxel.rect(x - 4, y - 10, 8, 2, 0)
-        # 光る凶悪な目
-        pyxel.pset(x - 2, y - 7, 8)
-        pyxel.pset(x + 2, y - 7, 8)
+        
+        eye_col = 8 if (pyxel.frame_count // 3) % 2 == 0 else 10
+        pyxel.pset(x - 2, y - 7, eye_col)
+        pyxel.pset(x + 2, y - 7, eye_col)
+        pyxel.pset(x - 2, y - 8, 7)
+        pyxel.pset(x + 2, y - 8, 7)
         pyxel.line(x - 2, y - 4, x + 2, y - 4, 0)
 
         if self.state == "captured":
@@ -598,19 +597,20 @@ class GameApp:
 
         self.title_transition = False
         self.title_transition_timer = 0
+        self.title_idle_timer = 0  # タイトル画面での放置時間計測用
 
         self.opening_noise = []
         self.opening_monsters = []
 
-        for _ in range(45):
+        for _ in range(50):
             self.opening_noise.append([
                 random.randint(0, WINDOW_W - 1),
                 random.randint(0, WINDOW_H - 1),
                 random.randint(1, 3),
-                random.choice([1, 5, 6, 7])
+                random.choice([1, 2, 8, 13])
             ])
 
-        for i in range(5):
+        for i in range(6):
             self.opening_monsters.append({
                 "x": 180 + i * 22,
                 "y": 72 + random.randint(-12, 12),
@@ -865,6 +865,7 @@ class GameApp:
         self.stage = -1
         self.time_remaining_next_stage = BASE_TIME_LIMIT
         self.start_time_total = 0
+        self.title_idle_timer = 0
         pyxel.stop()
         pyxel.playm(0, loop=True)
         self.fade.to(0, 0.06)
@@ -938,6 +939,7 @@ class GameApp:
                     self.opening_timer = 0
                     self.opening_transition = False
                     self.opening_transition_timer = 0
+                    self.title_idle_timer = 0
                     self.fade.alpha = 0.0
                     self.fade.target = 0.0
                     self.fade.active = False
@@ -945,10 +947,25 @@ class GameApp:
                     self.play_music_safe("OPENING")
 
         elif self.state == "TITLE":
-            if enter and not self.title_transition:
+            # 10秒間（300フレーム）操作がない場合、自動でオープニングへ戻す
+            if enter:
                 safe_play(3, 4)
                 self.title_transition = True
                 self.title_transition_timer = 0
+            else:
+                if (pyxel.btn(pyxel.KEY_RETURN) or 
+                    pyxel.btn(pyxel.KEY_SPACE) or 
+                    pyxel.btn(pyxel.GAMEPAD1_BUTTON_A) or 
+                    pyxel.btn(pyxel.GAMEPAD1_BUTTON_START)):
+                    self.title_idle_timer = 0
+                else:
+                    self.title_idle_timer += 1
+
+                if self.title_idle_timer >= TITLE_IDLE_TIMEOUT:
+                    self.state = "OPENING"
+                    self.opening_timer = 0
+                    self.title_idle_timer = 0
+                    self.play_music_safe("OPENING")
 
             if self.title_transition:
                 self.title_transition_timer += 1
@@ -981,6 +998,16 @@ class GameApp:
 
         elif self.state == "PLAYING":
             self.player.update(self.obstacles, True)
+            
+            if self.stage == FINAL_STAGE:
+                sanctuary_x = WINDOW_W - SANCTUARY_W
+                for dp in self.dummy_players:
+                    dp.x += random.uniform(-1.2, 1.2)
+                    dp.y += random.uniform(-1.2, 1.2)
+                    dp.x = clamp(dp.x, sanctuary_x + 3, WINDOW_W - 4)
+                    dp.y = clamp(dp.y, UI_HEIGHT + 6, WINDOW_H - 6)
+                    dp.walk_frame = (dp.walk_frame + 1) % 16
+
             for z in self.zombies:
                 z.update(self.player, self.obstacles, self.captured_zombies)
 
@@ -1177,29 +1204,32 @@ class GameApp:
         pyxel.camera(sx, sy)
 
         if t < 70:
+            # リアルで緊迫感のあるより緻密なダーク背景・ビル街
             pyxel.rect(0, 0, WINDOW_W, WINDOW_H, 1)
-            # 背景ビル群のグラデーション強化
-            pyxel.rect(15, 18, 35, 4, 0)
-            pyxel.rect(22, 14, 20, 5, 0)
-            pyxel.rect(105, 22, 38, 4, 0)
-            pyxel.rect(112, 18, 20, 5, 0)
+            pyxel.rect(12, 15, 40, 6, 0)
+            pyxel.rect(18, 11, 28, 5, 0)
+            pyxel.rect(102, 18, 44, 6, 0)
+            pyxel.rect(110, 14, 28, 5, 0)
 
-            pyxel.rect(0, 55, 30, 45, 0)
-            pyxel.rect(34, 48, 28, 52, 0)
-            pyxel.rect(65, 57, 34, 43, 0)
-            pyxel.rect(105, 46, 25, 54, 0)
-            pyxel.rect(135, 52, 25, 48, 0)
+            pyxel.rect(0, 52, 32, 48, 0)
+            pyxel.rect(33, 44, 30, 56, 0)
+            pyxel.rect(64, 54, 36, 46, 0)
+            pyxel.rect(102, 42, 28, 58, 0)
+            pyxel.rect(131, 50, 29, 50, 0)
 
+            # 窓の明かり（パニックを思わせる不気味な明滅）
             for bx, by in [
-                (7, 64), (17, 72),
-                (41, 57), (52, 67),
-                (73, 65), (87, 74),
-                (112, 56), (122, 70),
-                (142, 63), (153, 74)
+                (6, 60), (16, 68), (22, 80),
+                (38, 54), (48, 64), (55, 78),
+                (70, 62), (82, 72), (90, 85),
+                (108, 52), (118, 66), (125, 75),
+                (138, 60), (148, 72)
             ]:
-                pyxel.rect(bx, by, 3, 4, 10)
-                pyxel.pset(bx+1, by+1, 7) # 窓の明かり
+                win_col = 8 if (bx + t // 4) % 3 == 0 else 10
+                pyxel.rect(bx, by, 3, 4, win_col)
+                pyxel.pset(bx+1, by+1, 7)
 
+            # 道路とバリケードのディテール
             pyxel.rect(0, 92, WINDOW_W, 28, 0)
             pyxel.line(0, 92, WINDOW_W, 92, 5)
 
@@ -1214,6 +1244,7 @@ class GameApp:
             pyxel.line(140, 35, 147, 35, 7)
             pyxel.rect(145, 35, 5, 2, 10)
 
+            # 恐怖に震える人物と忍び寄るゾンビのリアリスティックな配置
             ix = 52
             iy = 78
             pyxel.circ(ix, iy + 8, 6, 0)
@@ -1221,16 +1252,35 @@ class GameApp:
             pyxel.rect(ix + 2, iy + 4, 3, 9, 11)
             pyxel.rect(ix - 6, iy - 5, 12, 12, 1)
             pyxel.rect(ix - 4, iy - 4, 8, 8, 7)
-            pyxel.line(ix - 6, iy - 2, ix - 10, iy + 3, 7)
-            pyxel.line(ix + 6, iy - 2, ix + 10, iy + 2, 7)
+            
+            pyxel.pset(ix - 2, iy - 2, 8)
+            pyxel.line(ix - 6, iy - 2, ix - 12, iy + 3 + (t % 2), 7)
+            pyxel.line(ix + 6, iy - 2, ix + 12, iy + 3 - (t % 2), 7)
             pyxel.circ(ix, iy - 10, 5, 6)
-            pyxel.rect(ix - 4, iy - 15, 9, 3, 0)
-            pyxel.line(ix + 9, iy - 1, ix + 15, iy - 6, 7)
-            pyxel.circ(ix + 16, iy - 7, 2, 8)
+            pyxel.rect(ix - 4, iy - 15, 9, 3, 5)
+            
+            z_offset = int(math.sin(t * 0.25) * 1.5)
+            pyxel.line(ix + 8, iy - 1 + z_offset, ix + 17, iy - 7 + z_offset, 3)
+            pyxel.circ(ix + 18, iy - 7 + z_offset, 3, 3)
+            pyxel.pset(ix + 17, iy - 8 + z_offset, 8)
+            pyxel.pset(ix + 19, iy - 8 + z_offset, 8)
+            pyxel.pset(ix + 18, iy - 6 + z_offset, 2)
+
             if (pyxel.frame_count // 30) % 2 == 0:
                 prompt = "スキップはエンターキー/Aボタン"
                 self.bdf.draw_text(self.center_text_x(prompt), 10, prompt, 8)
-            msg = "周辺住民には不要不急の外出を、、、。"
+            
+            # 表示したいメッセージのリスト
+            messages = [
+                "周辺住民には不要不急の外出は、、、。"
+            
+            ]
+
+            # 演出の秒間（テンポ）をコメント設計通り約3秒（90フレーム）に同期
+            interval = 90
+            index = (t // interval) % len(messages)
+            msg = messages[index]
+
             self.bdf.draw_text(self.center_text_x(msg), 103, msg, 7)
 
         elif 70 <= t < 145:
@@ -1351,16 +1401,15 @@ class GameApp:
                     self.bdf.draw_text(self.center_text_x(prompt), 10, prompt, 8)
 
         if 70 <= t < 200:
-            for _ in range(4):
+            for _ in range(5):
                 yy = random.randint(0, WINDOW_H - 1)
-                pyxel.line(0, yy, WINDOW_W, yy, random.choice([1, 5, 7]))
+                pyxel.line(0, yy, WINDOW_W, yy, random.choice([1, 2, 8, 13]))
 
         pyxel.camera(0, 0)
 
     def draw_title(self):
         pyxel.cls(12)
 
-        # 華やかな夜空とビル背景のレイヤー
         pyxel.circ(25, 50, 18, 6)
         pyxel.circ(45, 42, 22, 6)
         pyxel.circ(65, 46, 16, 6)
@@ -1451,17 +1500,25 @@ class GameApp:
         bg_col, line_col, grid_col, sanc_col = self.get_stage_theme()
         sanctuary_x = (WINDOW_W - SANCTUARY_W)
         
-        # 背景タイルのテクスチャ強化
         pyxel.rect(0, UI_HEIGHT, WINDOW_W, WINDOW_H - UI_HEIGHT, bg_col)
-        for y in range(UI_HEIGHT, WINDOW_H, 8): pyxel.line(0, y, WINDOW_W, y, 1)
-        for x in range(0, sanctuary_x, 8): pyxel.line(x, UI_HEIGHT, x, WINDOW_H, line_col)
-        for y in range(UI_HEIGHT + 4, WINDOW_H, 16): pyxel.line(0, y, sanctuary_x, y, grid_col)
+        for y in range(UI_HEIGHT, WINDOW_H, 8): 
+            pyxel.line(0, y, WINDOW_W, y, 1)
+        for x in range(0, sanctuary_x, 8): 
+            pyxel.line(x, UI_HEIGHT, x, WINDOW_H, line_col)
+        for y in range(UI_HEIGHT + 4, WINDOW_H, 16): 
+            pyxel.line(0, y, sanctuary_x, y, grid_col)
 
-        # 聖域の装飾ディテール強化
+        pyxel.line(15, UI_HEIGHT + 12, 32, UI_HEIGHT + 28, 0)
+        pyxel.line(32, UI_HEIGHT + 28, 28, UI_HEIGHT + 36, 0)
+        pyxel.line(75, WINDOW_H - 30, 95, WINDOW_H - 15, 0)
+        pyxel.line(100, UI_HEIGHT + 20, 112, UI_HEIGHT + 38, 0)
+        pyxel.pset(30, UI_HEIGHT + 32, 1)
+        pyxel.pset(85, WINDOW_H - 22, 1)
+
         pyxel.rect(sanctuary_x, UI_HEIGHT, SANCTUARY_W, WINDOW_H - UI_HEIGHT, sanc_col)
         pyxel.rectb(sanctuary_x, UI_HEIGHT, SANCTUARY_W, WINDOW_H - UI_HEIGHT, 13)
-        for y in range(UI_HEIGHT + 3, WINDOW_H, 7): pyxel.line(sanctuary_x + 2, y, WINDOW_W - 3, y, 12)
-        # 聖域の光るラインエフェクト
+        for y in range(UI_HEIGHT + 3, WINDOW_H, 7): 
+            pyxel.line(sanctuary_x + 2, y, WINDOW_W - 3, y, 12)
         if (pyxel.frame_count // 20) % 2 == 0:
             pyxel.line(sanctuary_x, UI_HEIGHT, sanctuary_x, WINDOW_H, 7)
 
