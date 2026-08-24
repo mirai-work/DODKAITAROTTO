@@ -1694,12 +1694,49 @@ class GameApp:
 
     def draw_final_logo(self):
         pyxel.cls(0)
+        t = self.title_logo_alpha_timer
+
+        # 1. 派手な演出のためのパーティクルを一定フレームごとに発生させる
+        if t == 1:
+            self.shake.start(30, 4)
+            self.burst(WINDOW_W // 2, WINDOW_H // 2, count=45, colors=[8, 9, 10, 11, 13, 7])
+            safe_play(3, 8) # 効果音
+
+        # 2. 登場時のスケール拡大（ズームイン）風アニメーション計算
+        # 最初の30フレームで文字が「ボワッ」と大きくなって現れる
+        scale_progress = clamp(t / 25.0, 0.0, 1.0)
+        
         title_text1 = "タロットカード"
         title_text2 = "チャンス！"
+
+        # 3. 虹色や点滅に変化する派手なカラーサイクリング
+        color_cycle1 = [8, 9, 10, 11]
+        color_cycle2 = [7, 13, 10, 8]
+        col1 = color_cycle1[(t // 4) % len(color_cycle1)]
+        col2 = color_cycle2[(t // 4) % len(color_cycle2)]
+
+        # 4. 座標の揺れや演出を少し加えた描画
         tx1 = self.center_text_x(title_text1)
         tx2 = self.center_text_x(title_text2)
+
+        # 登場時のダイナミックなオフセット（上から落ちてくるようなバウンド表現）
+        bounce_y = int(math.sin(t * 0.3) * 2) if t > 25 else int((1.0 - scale_progress) * -30)
         
-        self.bdf.draw_text(tx1, WINDOW_H // 2 - 12, title_text1, 8)
-        self.bdf.draw_text(tx2, WINDOW_H // 2 + 2, title_text2, 7)
+        # 影（シャドウ）をつけて立体感を出す
+        self.bdf.draw_text(tx1 + 2, WINDOW_H // 2 - 14 + bounce_y + 2, title_text1, 0)
+        self.bdf.draw_text(tx2 + 2, WINDOW_H // 2 + 2 + bounce_y + 2, title_text2, 0)
+
+        # メインの文字描画
+        self.bdf.draw_text(tx1, WINDOW_H // 2 - 14 + bounce_y, title_text1, col1)
+        self.bdf.draw_text(tx2, WINDOW_H // 2 + 2 + bounce_y, title_text2, col2)
+
+        # 5. 周囲に光の演出（パーティクルやエフェクト）を常時更新・描画
+        for p in self.particles:
+            p.update()
+            p.draw()
+        
+        # 画面の周囲を彩るフラッシュ枠
+        if t < 15 and (t // 2) % 2 == 0:
+            pyxel.rectb(4, 4, WINDOW_W - 8, WINDOW_H - 8, 7)
 
 GameApp()
