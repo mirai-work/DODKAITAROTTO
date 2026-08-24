@@ -6,7 +6,7 @@ import pyxel
 
 # ============================================================
 # DEMOCRACY OF THE DEAD
-# ULTIMATE GRAPHICS EDITION (BDF Font Integrated)
+# ULTIMATE GRAPHICS EDITION (Enhanced Visuals)
 # ============================================================
 
 WINDOW_W = 160
@@ -196,12 +196,15 @@ class Shockwave:
         self.color = color
 
     def update(self):
-        self.radius += 0.8
+        self.radius += 0.9
         self.life -= 1
 
     def draw(self):
         if self.life > 0:
             pyxel.circb(int(self.x), int(self.y), int(self.radius), self.color)
+            # 二重のリングでリッチな衝撃波
+            if self.life < 18:
+                pyxel.circb(int(self.x), int(self.y), int(self.radius * 0.6), 7)
 
 class Shake:
     def __init__(self):
@@ -248,13 +251,17 @@ class Fade:
     def draw(self):
         if self.alpha <= 0:
             return
-        count = int(self.alpha * 7)
-        for _ in range(count):
+
+        level = int(self.alpha * 6)
+        if level <= 0:
+            return
+
+        for i in range(level):
             pyxel.rect(0, 0, WINDOW_W, WINDOW_H, 0)
 
 
 # ============================================================
-# PLAYER
+# PLAYER (Enhanced Visuals)
 # ============================================================
 
 class Player:
@@ -330,11 +337,11 @@ class Player:
         self.dust_particles = [p for p in self.dust_particles if p[5] > 0]
 
     def spawn_transform_particle(self, color):
-        for _ in range(random.randint(2, 5)):
+        for _ in range(random.randint(3, 7)):
             self.transform_particles.append(
                 [self.x + random.uniform(-7, 7), self.y + random.uniform(-10, 5),
-                 random.uniform(-2.0, 2.0), random.uniform(-3.5, -1.0),
-                 color, random.randint(20, 50)]
+                 random.uniform(-2.5, 2.5), random.uniform(-4.0, -1.0),
+                 color, random.randint(25, 60)]
             )
 
     def draw(self):
@@ -347,10 +354,13 @@ class Player:
         for p in self.transform_particles:
             pyxel.rect(int(p[0]), int(p[1]), 2, 2, p[4])
 
-        pyxel.circ(x, y + 5, 5, 0)
-        pyxel.rect(x - 4, y + 4, 9, 2, 1)
+        # 足元の影（立体感強化）
+        pyxel.circ(x, y + 5, 5, 1)
+        pyxel.circ(x, y + 5, 3, 0)
+        pyxel.rect(x - 4, y + 4, 9, 2, 0)
 
         if self.is_zombified:
+            # ゾンビ化したプレイヤー（エフェクト強化）
             pyxel.circ(x, y - 3, 5, 3)
             pyxel.rect(x - 5, y + 1, 10, 7, 3)
             pyxel.rect(x - 4, y + 2, 8, 5, 4)
@@ -358,23 +368,29 @@ class Player:
             pyxel.pset(x + 2, y - 4, 8)
             pyxel.line(x - 2, y - 1, x + 2, y - 1, 0)
             pyxel.line(x - 1, y, x + 1, y, 0)
+            # グロー表現
+            pyxel.pset(x, y - 6, 8)
             return
 
         c = self.temp_color if self.temp_color is not None else self.color
         foot = [0, 1, -1, 0][(self.walk_frame // 4) % 4]
 
+        # 衣服と体躯のグラデーション・立体感
         pyxel.rect(x - 4, y + 3 + foot, 3, 4, c)
         pyxel.rect(x + 1, y + 3 - foot, 3, 4, c)
         pyxel.rect(x - 5, y - 3, 10, 8, c)
         pyxel.rect(x - 4, y - 2, 8, 6, 7)
         pyxel.line(x - 3, y - 2, x + 2, y - 2, 13)
+        pyxel.pset(x, y, c) # 胸元のアクセント
 
         arm_y = y - 1
         pyxel.line(x - 5, arm_y, x - 7, arm_y + 3, c)
         pyxel.line(x + 5, arm_y, x + 7, arm_y + 3, c)
 
+        # 頭部とハイライト
         pyxel.circ(x, y - 7, 4, 6)
         pyxel.circ(x, y - 7, 3, 7)
+        pyxel.pset(x + self.dir, y - 8, 13) # 髪のハイライト
 
         if self.char_type in ["heroine", "girl"]:
             hair_col = 5 if self.char_type == "heroine" else 4
@@ -395,7 +411,7 @@ class Player:
 
 
 # ============================================================
-# ZOMBIE
+# ZOMBIE (Enhanced Visuals)
 # ============================================================
 
 class Zombie:
@@ -495,6 +511,7 @@ class Zombie:
         for p in self.captured_particles:
             pyxel.pset(int(p[0]), int(p[1]), p[4])
 
+        # 影
         pyxel.circ(x, y + 5, 5, 0)
         c = 7 if self.state == "captured" else self.base_color
         step = 1 if int(self.attack_anim) % 2 == 0 else -1
@@ -513,12 +530,15 @@ class Zombie:
         pyxel.circ(x, y - 6, 4, c)
         pyxel.circ(x, y - 6, 3, c + 1)
         pyxel.rect(x - 4, y - 10, 8, 2, 0)
+        # 光る凶悪な目
         pyxel.pset(x - 2, y - 7, 8)
         pyxel.pset(x + 2, y - 7, 8)
         pyxel.line(x - 2, y - 4, x + 2, y - 4, 0)
 
         if self.state == "captured":
             pyxel.rectb(x - 6, y - 11, 12, 17, 13)
+            pyxel.pset(x - 6, y - 11, 7)
+            pyxel.pset(x + 5, y - 11, 7)
 
 
 # ============================================================
@@ -569,7 +589,35 @@ class GameApp:
 
         self.setup_sound()
 
-        self.state = "TITLE"
+        self.state = "OPENING"
+        self.opening_timer = 0
+        self.opening_transition = False
+        self.opening_transition_timer = 0
+        self.opening_finished = False
+        self.opening_shake = 0
+
+        self.title_transition = False
+        self.title_transition_timer = 0
+
+        self.opening_noise = []
+        self.opening_monsters = []
+
+        for _ in range(45):
+            self.opening_noise.append([
+                random.randint(0, WINDOW_W - 1),
+                random.randint(0, WINDOW_H - 1),
+                random.randint(1, 3),
+                random.choice([1, 5, 6, 7])
+            ])
+
+        for i in range(5):
+            self.opening_monsters.append({
+                "x": 180 + i * 22,
+                "y": 72 + random.randint(-12, 12),
+                "scale": random.uniform(0.5, 1.0),
+                "speed": random.uniform(0.7, 1.4)
+            })
+
         self.stage = -1
         self.stage_start_frame = 0
         self.stage_time_limit = BASE_TIME_LIMIT
@@ -590,7 +638,7 @@ class GameApp:
         
         self.ash_particles = [
             [random.uniform(0, WINDOW_W), random.uniform(0, WINDOW_H), random.uniform(0.1, 0.4)]
-            for _ in range(40)
+            for _ in range(45)
         ]
 
         self.fade = Fade()
@@ -612,17 +660,16 @@ class GameApp:
         self.show_final_score = False
         self.result_timer = 0
         
-        # 動画自動選択（ガチャ）用変数
         self.video_timer = 0
 
         self.title_particles = []
-        for _ in range(55):
+        for _ in range(65):
             self.title_particles.append(
                 [random.randint(0, WINDOW_W - 1), random.randint(0, WINDOW_H - 1),
                  random.uniform(0.2, 1.2), random.choice([5, 6, 7, 13])]
             )
 
-        self.play_music_safe("TITLE")
+        self.play_music_safe("OPENING")
 
         try:
             import js
@@ -688,29 +735,34 @@ class GameApp:
 
     def play_music_safe(self, mode):
         try:
-            pyxel.stop()
-            if mode == "TITLE": 
+            if mode == "OPENING":
+                pyxel.stop()
                 pyxel.playm(0, loop=True)
+            elif mode == "TITLE": 
+                pass
             elif mode == "PLAYING":
+                pyxel.stop()
                 music_id = self.stage if 1 <= self.stage <= 5 else (6 if self.stage == FINAL_STAGE else 1)
                 pyxel.playm(music_id, loop=True)
             elif mode == "ENDING": 
+                pyxel.stop()
                 pyxel.playm(7, loop=True)
             elif mode == "GAMEOVER":
+                pyxel.stop()
                 safe_play(0, 13, loop=True)
                 safe_play(1, 14, loop=True)
                 safe_play(2, 15, loop=True)
         except Exception:
             pass
 
-    def burst(self, x, y, count=25, colors=None):
-        if colors is None: colors = [7, 8, 11, 13]
+    def burst(self, x, y, count=30, colors=None):
+        if colors is None: colors = [7, 8, 11, 13, 10]
         for _ in range(count):
             angle = random.random() * math.pi * 2
-            speed = random.uniform(0.5, 3.0)
+            speed = random.uniform(0.5, 3.5)
             self.particles.append(
                 Particle(x, y, math.cos(angle) * speed, math.sin(angle) * speed,
-                         random.choice(colors), random.randint(20, 45), random.choice([1, 1, 2]), 0.05)
+                         random.choice(colors), random.randint(25, 50), random.choice([1, 2]), 0.04)
             )
 
     def update_effects(self):
@@ -813,7 +865,8 @@ class GameApp:
         self.stage = -1
         self.time_remaining_next_stage = BASE_TIME_LIMIT
         self.start_time_total = 0
-        self.play_music_safe("TITLE")
+        pyxel.stop()
+        pyxel.playm(0, loop=True)
         self.fade.to(0, 0.06)
 
     def movie_finished(self):
@@ -829,15 +882,90 @@ class GameApp:
             pyxel.btnp(GAMEPAD_C_ID) or pyxel.btnp(GAMEPAD_START_ID)
         )
 
-        if self.state == "TITLE":
-            if enter:
+        if self.state == "OPENING":
+            self.opening_timer += 1
+
+            if 75 <= self.opening_timer < 145:
+                self.opening_shake = 2
+            elif 145 <= self.opening_timer < 190:
+                self.opening_shake = 1
+            else:
+                self.opening_shake = 0
+
+            for n in self.opening_noise:
+                n[0] -= n[2]
+                if n[0] < 0:
+                    n[0] = WINDOW_W - 1
+                    n[1] = random.randint(0, WINDOW_H - 1)
+
+            if 70 <= self.opening_timer < 150:
+                for monster in self.opening_monsters:
+                    monster["x"] -= monster["speed"]
+                    monster["scale"] += 0.004
+                    if monster["x"] < 35:
+                        monster["x"] = 35
+
+            if self.opening_timer == 76:
+                safe_play(3, 8)
+                self.shake.start(10, 2)
+
+            if self.opening_timer == 165:
+                safe_play(3, 6)
+                self.shake.start(6, 1)
+
+            if self.opening_timer == 205:
                 safe_play(3, 4)
-                self.fade.to(1.0, 0.06)
-                self.next_state_called = True
-            if (self.next_state_called and not self.fade.active and self.fade.alpha >= 0.99):
-                self.next_state_called = False
-                self.state = "TUTORIAL"
-                self.fade.to(0.0, 0.06)
+
+            if enter and not self.opening_transition:
+                safe_play(3, 4)
+                self.opening_transition = True
+                self.opening_transition_timer = 0
+
+            if self.opening_timer >= 360 and not self.opening_transition:
+                self.opening_transition = True
+                self.opening_transition_timer = 0
+
+            if self.opening_transition:
+                self.opening_transition_timer += 1
+                if self.opening_transition_timer == 1:
+                    self.fade.alpha = 0.0
+                    self.fade.target = 1.0
+                    self.fade.speed = 0.10
+                    self.fade.active = True
+
+                if self.opening_transition_timer >= 12:
+                    self.state = "TITLE"
+                    self.opening_timer = 0
+                    self.opening_transition = False
+                    self.opening_transition_timer = 0
+                    self.fade.alpha = 0.0
+                    self.fade.target = 0.0
+                    self.fade.active = False
+                    self.next_state_called = False
+                    self.play_music_safe("OPENING")
+
+        elif self.state == "TITLE":
+            if enter and not self.title_transition:
+                safe_play(3, 4)
+                self.title_transition = True
+                self.title_transition_timer = 0
+
+            if self.title_transition:
+                self.title_transition_timer += 1
+                if self.title_transition_timer == 1:
+                    self.fade.alpha = 0.0
+                    self.fade.target = 1.0
+                    self.fade.speed = 0.10
+                    self.fade.active = True
+
+                if self.title_transition_timer >= 12:
+                    self.state = "TUTORIAL"
+                    self.title_transition = False
+                    self.title_transition_timer = 0
+                    self.fade.alpha = 0.0
+                    self.fade.target = 0.0
+                    self.fade.active = False
+                    self.next_state_called = False
 
         elif self.state == "TUTORIAL":
             if enter:
@@ -860,7 +988,7 @@ class GameApp:
             for z in newly:
                 self.captured_zombies.append(z)
                 self.shockwaves.append(Shockwave(z.x, z.y, 8))
-                self.burst(z.x, z.y, count=10, colors=[8, 9, 13])
+                self.burst(z.x, z.y, count=12, colors=[8, 9, 13, 7])
                 self.shake.start(4, 1)
 
             elapsed = (pyxel.frame_count - self.stage_start_frame) / 60.0
@@ -927,7 +1055,7 @@ class GameApp:
                 if (self.ending_timer % 8 == 0): safe_play(3, 11)
                 if (self.ending_timer % 10 == 0):
                     for p in self.dummy_players:
-                        p.spawn_transform_particle(random.choice([3, 8, 13]))
+                        p.spawn_transform_particle(random.choice([3, 8, 13, 7]))
                 if (self.ending_timer % 5 < 2): self.shake.start(3, 2)
                 for p in self.dummy_players:
                     if (self.ending_timer % 6 < 3): p.temp_color = random.choice([3, 8, 13])
@@ -936,7 +1064,7 @@ class GameApp:
             if (self.ending_timer == TRANSFORM_DURATION):
                 self.shake.start(25, 6)
                 safe_play(3, 9)
-                self.burst(self.player.x, self.player.y, count=40, colors=[8, 13, 3])
+                self.burst(self.player.x, self.player.y, count=50, colors=[8, 13, 3, 7])
                 for p in self.dummy_players:
                     p.is_zombified = True
                     p.temp_color = None
@@ -985,7 +1113,6 @@ class GameApp:
                 self.fade.target = 0.0
                 pyxel.stop()
 
-        # ========= 動画自動選択（確率：80%, 15%, 5%） =========
         elif self.state == "MOVIE_GACHA":
             if self.video_timer == 0:
                 rand_val = random.random()
@@ -1004,7 +1131,6 @@ class GameApp:
 
             self.video_timer += 1
             
-            # 動画終了判定（例：約10秒 = 600フレーム）
             if self.video_timer > 600:
                 self.reset_to_title()
 
@@ -1012,7 +1138,8 @@ class GameApp:
         ox, oy = self.shake.get_offset()
         pyxel.cls(0)
 
-        if self.state == "TITLE": self.draw_title()
+        if self.state == "OPENING": self.draw_opening()
+        elif self.state == "TITLE": self.draw_title()
         elif self.state == "TUTORIAL": self.draw_tutorial()
         elif self.state in ("PLAYING", "GO_TO_SANCT"):
             pyxel.camera(ox, oy)
@@ -1037,9 +1164,203 @@ class GameApp:
 
         self.fade.draw()
 
+    def draw_opening(self):
+        pyxel.cls(0)
+        t = self.opening_timer
+
+        sx = 0
+        sy = 0
+        if self.opening_shake > 0:
+            sx = random.randint(-self.opening_shake, self.opening_shake)
+            sy = random.randint(-self.opening_shake, self.opening_shake)
+
+        pyxel.camera(sx, sy)
+
+        if t < 70:
+            pyxel.rect(0, 0, WINDOW_W, WINDOW_H, 1)
+            # 背景ビル群のグラデーション強化
+            pyxel.rect(15, 18, 35, 4, 0)
+            pyxel.rect(22, 14, 20, 5, 0)
+            pyxel.rect(105, 22, 38, 4, 0)
+            pyxel.rect(112, 18, 20, 5, 0)
+
+            pyxel.rect(0, 55, 30, 45, 0)
+            pyxel.rect(34, 48, 28, 52, 0)
+            pyxel.rect(65, 57, 34, 43, 0)
+            pyxel.rect(105, 46, 25, 54, 0)
+            pyxel.rect(135, 52, 25, 48, 0)
+
+            for bx, by in [
+                (7, 64), (17, 72),
+                (41, 57), (52, 67),
+                (73, 65), (87, 74),
+                (112, 56), (122, 70),
+                (142, 63), (153, 74)
+            ]:
+                pyxel.rect(bx, by, 3, 4, 10)
+                pyxel.pset(bx+1, by+1, 7) # 窓の明かり
+
+            pyxel.rect(0, 92, WINDOW_W, 28, 0)
+            pyxel.line(0, 92, WINDOW_W, 92, 5)
+
+            for x in range(-20, WINDOW_W, 28):
+                pyxel.rect(x, 106, 13, 2, 5)
+
+            pyxel.line(18, 42, 18, 92, 7)
+            pyxel.line(18, 42, 25, 42, 7)
+            pyxel.rect(23, 42, 5, 2, 10)
+
+            pyxel.line(140, 35, 140, 92, 7)
+            pyxel.line(140, 35, 147, 35, 7)
+            pyxel.rect(145, 35, 5, 2, 10)
+
+            ix = 52
+            iy = 78
+            pyxel.circ(ix, iy + 8, 6, 0)
+            pyxel.rect(ix - 5, iy + 4, 3, 9, 11)
+            pyxel.rect(ix + 2, iy + 4, 3, 9, 11)
+            pyxel.rect(ix - 6, iy - 5, 12, 12, 1)
+            pyxel.rect(ix - 4, iy - 4, 8, 8, 7)
+            pyxel.line(ix - 6, iy - 2, ix - 10, iy + 3, 7)
+            pyxel.line(ix + 6, iy - 2, ix + 10, iy + 2, 7)
+            pyxel.circ(ix, iy - 10, 5, 6)
+            pyxel.rect(ix - 4, iy - 15, 9, 3, 0)
+            pyxel.line(ix + 9, iy - 1, ix + 15, iy - 6, 7)
+            pyxel.circ(ix + 16, iy - 7, 2, 8)
+            if (pyxel.frame_count // 30) % 2 == 0:
+                prompt = "スキップはエンターキー/Aボタン"
+                self.bdf.draw_text(self.center_text_x(prompt), 10, prompt, 8)
+            msg = "周辺住民には不要不急の外出を、、、。"
+            self.bdf.draw_text(self.center_text_x(msg), 103, msg, 7)
+
+        elif 70 <= t < 145:
+            pyxel.rect(0, 0, WINDOW_W, WINDOW_H, 1)
+            pyxel.rect(0, 55, WINDOW_W, 65, 0)
+
+            flash = (t // 3) % 2 == 0
+            if flash:
+                pyxel.rect(0, 0, WINDOW_W, WINDOW_H, 8)
+
+            for bx, bh in [
+                (0, 45), (20, 55), (48, 40),
+                (78, 50), (110, 43), (140, 55)
+            ]:
+                pyxel.rect(bx, 100 - bh, 22, bh, 0)
+
+            for monster in self.opening_monsters:
+                mx = int(monster["x"])
+                my = int(monster["y"])
+                scale = monster["scale"]
+                r = max(3, int(4 * scale))
+
+                pyxel.circ(mx, my + r, r * 2, 0)
+                pyxel.rect(mx - r, my, r * 2 + 1, r * 2 + 2, 3)
+                pyxel.circ(mx, my - r, r, 4)
+                pyxel.pset(mx - max(1, r // 2), my - r, 8)
+                pyxel.pset(mx + max(1, r // 2), my - r, 8)
+                pyxel.line(mx - r, my + 2, mx - r * 2, my + r, 3)
+                pyxel.line(mx + r, my + 2, mx + r * 2, my + r, 3)
+
+            progress = clamp((t - 70) / 75.0, 0.0, 1.0)
+            mx = int(145 - progress * 115)
+            my = 72
+            big_r = int(5 + progress * 8)
+
+            pyxel.circ(mx, my + big_r, big_r * 2, 0)
+            pyxel.circ(mx, my - big_r, big_r, 3)
+            pyxel.rect(mx - big_r, my, big_r * 2, big_r * 2, 4)
+            pyxel.pset(mx - 3, my - big_r, 8)
+            pyxel.pset(mx + 3, my - big_r, 8)
+
+            if progress > 0.45:
+                pyxel.line(mx - 12, my - 8, mx - 3, my, 8)
+                pyxel.line(mx + 12, my - 8, mx + 3, my, 8)
+            if (pyxel.frame_count // 30) % 2 == 0:
+                prompt = "スキップはエンターキー/Aボタン"
+                self.bdf.draw_text(self.center_text_x(prompt), 10, prompt, 8)
+            msg = "ひっ、、、！"
+            self.bdf.draw_text(self.center_text_x(msg), 104, msg, 8)
+
+        elif 145 <= t < 200:
+            pyxel.cls(0)
+            for n in self.opening_noise:
+                pyxel.pset(n[0], n[1], n[3])
+
+            pw = 72
+            ph = 48
+            px = (WINDOW_W - pw) // 2
+            py = 34
+
+            pyxel.rect(px - 2, py - 2, pw + 4, ph + 4, 7)
+            pyxel.rect(px, py, pw, ph, 0)
+            pyxel.rect(px + 27, py + 3, 18, 2, 5)
+
+            wx = px + pw // 2
+            wy = py + 17
+            if (pyxel.frame_count // 30) % 2 == 0:
+                prompt = "スキップはエンターキー/Aボタン"
+                self.bdf.draw_text(self.center_text_x(prompt), 10, prompt, 8)
+            if t < 165:
+                pyxel.pset(wx, wy + 10, 11)
+                pyxel.line(wx - 4, wy + 7, wx + 4, wy + 7, 11)
+                pyxel.line(wx - 7, wy + 3, wx + 7, wy + 3, 11)
+                status = "Wi-Fi: 接続中..."
+                self.bdf.draw_text(self.center_text_x(status), py + 34, status, 7)
+            else:
+                pyxel.line(wx - 8, wy + 1, wx + 8, wy + 13, 8)
+                pyxel.line(wx - 8, wy + 13, wx + 8, wy + 1, 8)
+                status = "通信エラー"
+                self.bdf.draw_text(self.center_text_x(status), py + 34, status, 8)
+
+            msg = "通信が途絶した——"
+            self.bdf.draw_text(self.center_text_x(msg), 101, msg, 13)
+
+        else:
+            pyxel.cls(0)
+            if t < 220:
+                for n in self.opening_noise:
+                    if random.random() < 0.35:
+                        pyxel.pset(n[0], n[1], n[3])
+
+            title_progress = clamp((t - 205) / 35.0, 0.0, 1.0)
+            if title_progress > 0.5:
+                pyxel.rectb(17, 35, 126, 48, 8)
+            if (pyxel.frame_count // 30) % 2 == 0:
+                prompt = "スキップはエンターキー/Aボタン"
+                self.bdf.draw_text(self.center_text_x(prompt), 10, prompt, 8)
+            title1 = "えっ、、、"
+            title2 = "やばくね？"
+            tx1 = self.center_text_x(title1)
+            tx2 = self.center_text_x(title2)
+
+            if title_progress > 0.2:
+                self.bdf.draw_text(tx1 + 2, 47 + 2, title1, 1)
+                self.bdf.draw_text(tx2 + 2, 62 + 2, title2, 1)
+
+            col1 = 8 if title_progress > 0.35 else 7
+            col2 = 13 if title_progress > 0.55 else 7
+
+            self.bdf.draw_text(tx1, 47, title1, col1)
+            self.bdf.draw_text(tx2, 62, title2, col2)
+
+            if t > 250:
+                subtitle = "今のぜってー食われたっしょっｗｗｗ."
+                self.bdf.draw_text(self.center_text_x(subtitle), 104, subtitle, 7)
+                if (pyxel.frame_count // 30) % 2 == 0:
+                    prompt = "スキップはエンターキー/Aボタン"
+                    self.bdf.draw_text(self.center_text_x(prompt), 10, prompt, 8)
+
+        if 70 <= t < 200:
+            for _ in range(4):
+                yy = random.randint(0, WINDOW_H - 1)
+                pyxel.line(0, yy, WINDOW_W, yy, random.choice([1, 5, 7]))
+
+        pyxel.camera(0, 0)
+
     def draw_title(self):
         pyxel.cls(12)
 
+        # 華やかな夜空とビル背景のレイヤー
         pyxel.circ(25, 50, 18, 6)
         pyxel.circ(45, 42, 22, 6)
         pyxel.circ(65, 46, 16, 6)
@@ -1074,7 +1395,7 @@ class GameApp:
         pyxel.rect(46, store_y - 12, 68, 14, 0)
         pyxel.rectb(46, store_y - 12, 68, 14, 7)
         neon_color = 8 if (pyxel.frame_count // 15) % 2 == 0 else 2
-        self.bdf.draw_text(48, store_y - 9, "CAMERA SHOP", neon_color)
+        self.bdf.draw_text(48, store_y - 9, "DRUG SHOP", neon_color)
 
         frame_x, frame_y = TITLE_FRAME_X, TITLE_FRAME_Y
         pyxel.rect(frame_x - 1, frame_y - 1, TITLE_FRAME_W + 2, TITLE_FRAME_H + 2, 7)
@@ -1123,21 +1444,26 @@ class GameApp:
             self.bdf.draw_text(72, y, body, 7)
 
         if (pyxel.frame_count // 20) % 2 == 0:
-            start_msg = "- エンターキーでスタート -"
+            start_msg = "エンターキー/Aボタンでスタート"
             self.bdf.draw_text(self.center_text_x(start_msg), 108, start_msg, 8)
 
     def draw_playing(self):
         bg_col, line_col, grid_col, sanc_col = self.get_stage_theme()
         sanctuary_x = (WINDOW_W - SANCTUARY_W)
         
+        # 背景タイルのテクスチャ強化
         pyxel.rect(0, UI_HEIGHT, WINDOW_W, WINDOW_H - UI_HEIGHT, bg_col)
         for y in range(UI_HEIGHT, WINDOW_H, 8): pyxel.line(0, y, WINDOW_W, y, 1)
         for x in range(0, sanctuary_x, 8): pyxel.line(x, UI_HEIGHT, x, WINDOW_H, line_col)
         for y in range(UI_HEIGHT + 4, WINDOW_H, 16): pyxel.line(0, y, sanctuary_x, y, grid_col)
 
+        # 聖域の装飾ディテール強化
         pyxel.rect(sanctuary_x, UI_HEIGHT, SANCTUARY_W, WINDOW_H - UI_HEIGHT, sanc_col)
         pyxel.rectb(sanctuary_x, UI_HEIGHT, SANCTUARY_W, WINDOW_H - UI_HEIGHT, 13)
         for y in range(UI_HEIGHT + 3, WINDOW_H, 7): pyxel.line(sanctuary_x + 2, y, WINDOW_W - 3, y, 12)
+        # 聖域の光るラインエフェクト
+        if (pyxel.frame_count // 20) % 2 == 0:
+            pyxel.line(sanctuary_x, UI_HEIGHT, sanctuary_x, WINDOW_H, 7)
 
         entities = (list(self.players) + list(self.zombies))
         entities.sort(key=lambda e: e.y)
